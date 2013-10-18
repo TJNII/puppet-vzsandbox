@@ -115,6 +115,7 @@ class Builder(restful.Resource):
             assert(vzlib.get_status(ctid)["running"] == True)
 
             return { "ct": ctid,
+                     "ip": ("%s%s" % (Config["build"]["ipaddr-prefix"], ctid)),
                      "runtime": (time.time() - starttime)}
 
         # Failed to use existing cts, build a new one
@@ -134,6 +135,7 @@ class Builder(restful.Resource):
             assert(vzlib.get_status(ctid)["running"] == True)
             
             return { "ct": ctid,
+                     "ip": ("%s%s" % (Config["build"]["ipaddr-prefix"], ctid)),
                      "runtime": (time.time() - starttime) }
         
 def main():

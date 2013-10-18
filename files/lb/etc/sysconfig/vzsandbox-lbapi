@@ -1,0 +1,6 @@
+# specify additional command line arguments for vzsandbox-lbapi
+#
+# Well, at this point you can't, because the script doesn't accept arguments...
+# but if in the future you can this is where they will go!
+#
+# See the main config file /etc/vzsandbox-lb.yaml
