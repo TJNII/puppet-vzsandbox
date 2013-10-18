@@ -7,18 +7,7 @@ class vzsandbox::hypervisor::api (
   # the API requires flask-restful which is installed by pip which is provided by epel
   include "repoconfig::epel"
   include "vzsandbox::hypervisor::common"
-
-  package { ['python-pip', 'PyYAML']:
-    ensure   => installed,
-    require  => Class['repoconfig::epel'],
-  }
-  
-  # Install flask-restful and its deps to enable the API
-  package { ['flask-restful', 'six']:
-    ensure   => installed,
-    provider => 'pip',
-    require  => Package['python-pip'],
-  }
+  include "vzsandbox::common::api"
 
   file { "/usr/local/bin/vzsandbox-api.py":
     ensure  => file,
@@ -26,7 +15,8 @@ class vzsandbox::hypervisor::api (
     group   => root,
     mode    => 750,
     source  => "puppet:///modules/vzsandbox/hypervisor/usr/local/bin/vzsandbox-api.py",
-    require => Class["vzsandbox::hypervisor::common"],
+    require => [ Class["vzsandbox::hypervisor::common"],
+                 Class["vzsandbox::common::api"] ],
   }
 
   file { "/usr/local/bin/vzsandbox-api-daemon.sh":

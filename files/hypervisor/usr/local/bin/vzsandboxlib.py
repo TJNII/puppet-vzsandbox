@@ -53,6 +53,7 @@ class Vzsandbox(object):
         retVal = {}
         retVal["configured"] = self.verify_ct(ctid)
         retVal["rebuilding"] = self.check_rebuilding_flag(ctid)
+        retVal["clean"] = self.check_clean_flag(ctid)
 
         # Get vzctl status
         statusProcess = subprocess.Popen(("vzctl status %d" % ctid), stdout=subprocess.PIPE, shell=True)
@@ -176,6 +177,7 @@ class Vzsandbox(object):
         self.set_rebuilding_flag(ctid)
         process = subprocess.Popen(("rsync --delete -a %s/ %s/%d" % (source, self.config["vz-dirs"]["private"], ctid)), stdout=subprocess.PIPE, shell=True)
         assert(process.wait() == 0)
+        self.set_clean_flag(ctid)
         self.clear_rebuilding_flag(ctid)
 
     def reset_ctfs(self, ctid):
@@ -191,12 +193,16 @@ class Vzsandbox(object):
 
         starttime = time.time()
         # Copy vz private data
-        self.reset_ctfs_core(ctid, source)
+        clean = self.check_clean_flag(ctid)
+        if not clean:
+            self.reset_ctfs_core(ctid, source)
 
         return {"status": True,
-                "runtime": (time.time() - starttime)}
+                "runtime": (time.time() - starttime),
+                "wasClean": clean }
 
     def poweraction(self, command, ctid):
+        self.clear_clean_flag(ctid)
         starttime = time.time()
         process = subprocess.Popen(("vzctl %s %d" % (command, ctid)), stdout=subprocess.PIPE, shell=True)
         assert(process.wait() == 0)
@@ -259,3 +265,23 @@ class Vzsandbox(object):
 
     def check_rebuilding_flag(self, ctid):
         return os.path.isfile(self._rebuilding_lockfile(ctid))
+
+    # TODO: Deduplicate code between rebuilding and clean
+    # NOTE: clean intentionally has less failure checks than rebuild
+    def _clean_lockfile(self, ctid):
+        # This is a simple lock file
+        return ("%s/%d.conf.clean" % (self.config["vz-dirs"]["conf"], ctid))
+
+    def set_clean_flag(self, ctid):
+        # This is a potential race condition, but I'm unaware of any way to determine
+        # from open() if the file existed.
+        with open(self._clean_lockfile(ctid), "w") as fd:
+            fd.write("%s" % time.time())
+
+    def clear_clean_flag(self, ctid):
+        # Don't assert on the clean flag, it is indescriminantly unset.
+        if self.check_clean_flag(ctid):
+            os.remove(self._clean_lockfile(ctid))
+
+    def check_clean_flag(self, ctid):
+        return os.path.isfile(self._clean_lockfile(ctid))
