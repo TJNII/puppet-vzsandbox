@@ -21,6 +21,8 @@ class Vzsandbox(object):
     def __init__(self, config, arguments = None):
         self.config = config
         self.arguments = arguments
+        self.ctid_limit = { "min": 1,
+                            "max": 253 }
 
     # verify_ct: Verify if a container exists / is configured via the conf file
     def verify_ct(self, ctid):
@@ -92,12 +94,26 @@ class Vzsandbox(object):
                     
         return sorted(retVal)
 
+    # get_unused_ctid: Return an unused/unconfigured ct
+    def get_unused_ct(self):
+        cts = self.get_all_cts()
+        for x in xrange(self.ctid_limit["min"], (self.ctid_limit["max"] + 1), 1):
+            if x >= len(cts):
+                if not self.check_rebuilding_flag(x):
+                    return x
+            else:
+                if x < cts[(x - 1)] and not self.check_rebuilding_flag(x):
+                    return x
+
+        return None
+
     def get_all_status(self):
         cts = self.get_all_cts()
         retVal = { "containers": cts,
                    "idleContainers": [],
                    "inUseContainers": [],
-                   "busyContainers": []
+                   "busyContainers": [],
+                   "expiredContainers": []
                    }
 
         for ctid in cts:
@@ -108,6 +124,8 @@ class Vzsandbox(object):
                 retVal["busyContainers"].append(ctid)
             elif status["userActive"] == True:
                 retVal["inUseContainers"].append(ctid)
+            elif status["running"] == True:
+                retVal["expiredContainers"].append(ctid)
             else:
                 retVal["idleContainers"].append(ctid)
 
@@ -115,24 +133,14 @@ class Vzsandbox(object):
 
 
     def create_ct(self, ctid):
-        if not self.arguments.has_key("source") or not self.arguments.has_key("hostname") or not self.arguments.has_key("ipaddr"):
-            return False
-
-        # Validate input
-        if not re.match("^[^ \t\n\r\f\v/]+$", self.arguments['source']):
-            return False
-        if not re.match("^[a-zA-Z0-9.-]+$", self.arguments['hostname']):
-            return False
-        # Just ensure this is something that /looks/ like an IP address, not a full verification
-        if not re.match("^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$", self.arguments['ipaddr']):
-            return False
-        
-        source = "%s/%s" % (self.config["vz-dirs"]["templates"], self.arguments['source'])
+        source = "%s/%s" % (self.config["build"]["templates"], self.config["build"]["source"])
         if not os.path.isdir(source) or not os.path.isfile("%s.conf" % source):
+            print "ERROR: Bad Source \"%s\"" % source
             return False
         
         status = self.get_status(ctid)
         if status["running"] or status["rebuilding"]:
+            print "ERROR: container is up"
             return False
 
         starttime = time.time()
@@ -146,7 +154,9 @@ class Vzsandbox(object):
             assert(os.path.isdir("%s/%d" % (self.config["vz-dirs"]["root"], ctid)))
 
         # Generate config file
-        self.write_config(("%s.conf" % source), self.arguments['hostname'], self.arguments['ipaddr'],
+        self.write_config(("%s.conf" % source), 
+                          ("%s%s%s" % (self.config["build"]["hostname-prefix"], ctid, self.config["build"]["hostname-suffix"])),
+                          ("%s%s" % (self.config["build"]["ipaddr-prefix"], ctid)),
                           ("%s/%d.conf" % (self.config["vz-dirs"]["conf"], ctid)))
 
         return {"status": True,
@@ -169,18 +179,14 @@ class Vzsandbox(object):
         self.clear_rebuilding_flag(ctid)
 
     def reset_ctfs(self, ctid):
-        if not self.arguments.has_key("source"):
-            return False
-
-        # Validate input
-        if not re.match("^[^ \t\n\r\f\v/]+$", self.arguments['source']):
-            return False
-        source = "%s/%s" % (self.config["vz-dirs"]["templates"], self.arguments['source'])
+        source = "%s/%s" % (self.config["build"]["templates"], self.config["build"]["source"])
         if not os.path.isdir(source) or not os.path.isfile("%s.conf" % source):
+            print "ERROR: Bad Source \"%s\"" % source
             return False
         
         status = self.get_status(ctid)
         if status["running"] or status["rebuilding"]:
+            print "ERROR: Bad Container is up"
             return False
 
         starttime = time.time()
@@ -190,40 +196,50 @@ class Vzsandbox(object):
         return {"status": True,
                 "runtime": (time.time() - starttime)}
 
+    def poweraction(self, command, ctid):
+        starttime = time.time()
+        process = subprocess.Popen(("vzctl %s %d" % (command, ctid)), stdout=subprocess.PIPE, shell=True)
+        assert(process.wait() == 0)
+        return (time.time() - starttime)
+
     def set_ct_power(self, ctid):
-        def _poweraction(command, ctid):
-            starttime = time.time()
-            process = subprocess.Popen(("vzctl %s %d" % (command, ctid)), stdout=subprocess.PIPE, shell=True)
-            assert(process.wait() == 0)
-            return (time.time() - starttime)
-            
+        if self.arguments is None:
+            print "ERROR: power POST requires state argument"
+            return False
+
         if not self.arguments.has_key("state"):
+            print "ERROR: power POST requires state argument"
             return False
             
         state = self.arguments['state'].strip().lower()
         if state == "on":
             if self.get_status(ctid)["running"]:
+                print "ERROR: ct is already on"
                 return False
 
             return {"status": True,
-                    "runtime": _poweraction("start", ctid)}
+                    "runtime": self.poweraction("start", ctid)}
 
         if state == "off":
             status = self.get_status(ctid)
             if not status["running"]:
+                print "ERROR: ct is already off"
                 return False
 
             # This is not populated if the server is down.
             if status["userActive"]:
                 if self.arguments.has_key("force"):
                     if self.arguments['force'] != True:
+                        print "ERROR: ct is in use"
                         return False
                 else:
+                    print "ERROR: ct is in use"
                     return False
 
             return {"status": True,
-                    "runtime": _poweraction("stop", ctid)}
+                    "runtime": self.poweraction("stop", ctid)}
 
+        print "Unknown state \"%s\"" % state
         return False
 
     def _rebuilding_lockfile(self, ctid):

@@ -10,21 +10,18 @@ import vzsandboxlib
 class VZCTAPI(restful.Resource):
     def get(self, ctid, action):
         if ctid < 1 or ctid > 254:
+            print "ERROR: ctid out of range"
             abort(400)
 
-        print "Debug: GET"
-
         vzlib = vzsandboxlib.Vzsandbox(Config)
-        retVal = None
 
         if action == "config":
             retVal = vzlib.get_config(ctid)
-
-        if action == "status":
+        elif action == "status":
             retVal = vzlib.get_status(ctid)
-
-        if retVal == None:
+        else:
             abort(404)
+
         if retVal == False:
             abort(400)
         return retVal
@@ -32,37 +29,39 @@ class VZCTAPI(restful.Resource):
 
     def post(self, ctid, action):
         if ctid < 1 or ctid > 254:
+            print "ERROR: ctid out of range"
             abort(400)
 
         vzlib = vzsandboxlib.Vzsandbox(Config, arguments = request.json)
-        retVal = None
 
         if not vzlib.verify_ct(ctid):
+            print "ERROR: POST to non-existant container"
             abort(400)
 
         if action == "reset":
             retVal = vzlib.reset_ctfs(ctid)
-        if action == "power":
+        elif action == "power":
             retVal = vzlib.set_ct_power(ctid)
-
-        if retVal == None:
+        else:
             abort(404)
+
         if retVal == False:
             abort(400)
+
         return retVal
 
     def put(self, ctid, action):
         if ctid < 1 or ctid > 254:
+            print "ERROR: ctid out of range"
             abort(400)
 
         vzlib = vzsandboxlib.Vzsandbox(Config, arguments = request.json)
-        retVal = None
 
         if action == "create":
             retVal = vzlib.create_ct(ctid)
-
-        if retVal == None:
+        else:
             abort(404)
+            
         if retVal == False:
             abort(400)
         return retVal
