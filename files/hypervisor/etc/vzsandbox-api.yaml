@@ -1,0 +1,8 @@
+vz-dirs:
+  templates: /vzTemplates
+  conf:      /etc/vz/conf
+  private:   /vz/private
+  root:      /vz/root
+
+server:
+  bind-address: 0.0.0.0
