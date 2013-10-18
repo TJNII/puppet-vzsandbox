@@ -1,0 +1,16 @@
+vz-dirs:
+  conf:      /etc/vz/conf
+  private:   /vz/private
+  root:      /vz/root
+
+build:
+  templates:       /vzTemplates
+  source:          cpMinimal
+  hostname-prefix: sandbox
+  hostname-suffix: .sandboxes.rshscp.us
+  ipaddr-prefix:   <%= subnet_prefix %>
+  standby-count:   25
+  max-count:       <%= max_containers %>
+
+server:
+  bind-address: 0.0.0.0

@@ -2,6 +2,8 @@
 # Common files
 class vzsandbox::hypervisor::common (
   $manage_firewall = true,
+  $subnet_prefix,
+  $max_containers = 253,
   ) {
   file { "/usr/local/bin/vzsandboxlib.py":
     ensure  => file,
@@ -16,6 +18,6 @@ class vzsandbox::hypervisor::common (
     owner   => root,
     group   => root,
     mode    => 644,
-    source  => "puppet:///modules/vzsandbox/hypervisor/etc/vzsandbox.yaml",
+    content => template("vzsandbox/hypervisor/etc/vzsandbox.yaml.erb"),
   }
 }

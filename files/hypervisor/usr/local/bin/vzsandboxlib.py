@@ -98,10 +98,15 @@ class Vzsandbox(object):
     # get_unused_ctid: Return an unused/unconfigured ct
     def get_unused_ct(self):
         cts = self.get_all_cts()
-        for x in xrange(self.ctid_limit["min"], (self.ctid_limit["max"] + 1), 1):
+
+        ctmax = self.ctid_limit["max"]
+        if self.config['build'].has_key("max-count"):
+            if self.config['build']['max-count'] < ctmax:
+                ctmax = self.config['build']['max-count']
+        for x in xrange(self.ctid_limit["min"], (ctmax + 1), 1):
             if x >= len(cts):
                 if not self.check_rebuilding_flag(x):
-                    return x
+                    return (x + 1)
             else:
                 if x < cts[(x - 1)] and not self.check_rebuilding_flag(x):
                     return x
@@ -140,8 +145,12 @@ class Vzsandbox(object):
             return False
         
         status = self.get_status(ctid)
-        if status["running"] or status["rebuilding"]:
+        if status["running"]:
             print "ERROR: container is up"
+            return False
+
+        if status["rebuilding"]:
+            print "ERROR: container is building"
             return False
 
         starttime = time.time()
@@ -184,6 +193,7 @@ class Vzsandbox(object):
         source = "%s/%s" % (self.config["build"]["templates"], self.config["build"]["source"])
         if not os.path.isdir(source) or not os.path.isfile("%s.conf" % source):
             print "ERROR: Bad Source \"%s\"" % source
+            # TODO: As this is from the config the response should be 500, not 400
             return False
         
         status = self.get_status(ctid)
@@ -193,6 +203,7 @@ class Vzsandbox(object):
 
         starttime = time.time()
         # Copy vz private data
+        # TODO: Add a clean override / force clean arg for the cron cleaner
         clean = self.check_clean_flag(ctid)
         if not clean:
             self.reset_ctfs_core(ctid, source)
