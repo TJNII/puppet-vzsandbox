@@ -42,12 +42,12 @@ class vzsandbox::hypervisor (
     source  => "puppet:///modules/vzsandbox/hypervisor/usr/local/bin/vzsandbox-api-daemon.sh",
   }
 
-  file { "/etc/vzsandbox-api.yaml":
+  file { "/etc/vzsandbox.yaml":
     ensure  => file,
     owner   => root,
     group   => root,
     mode    => 644,
-    source  => "puppet:///modules/vzsandbox/hypervisor/etc/vzsandbox-api.yaml",
+    source  => "puppet:///modules/vzsandbox/hypervisor/etc/vzsandbox.yaml",
   }
   
   file { "/etc/sysconfig/vzsandbox-api":
@@ -72,7 +72,7 @@ class vzsandbox::hypervisor (
         subscribe   => [ File["/usr/local/bin/vzsandbox-api.py"],
                          File["/usr/local/bin/vzsandboxlib.py"],
                          File["/usr/local/bin/vzsandbox-api-daemon.sh"],
-                         File["/etc/vzsandbox-api.yaml"],
+                         File["/etc/vzsandbox.yaml"],
                          File["/etc/sysconfig/vzsandbox-api"],
                          File["/etc/init.d/vzsandbox-api"],
                          ],

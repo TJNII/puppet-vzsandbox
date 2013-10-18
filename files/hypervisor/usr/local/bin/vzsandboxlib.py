@@ -7,7 +7,7 @@ import os
 import subprocess
 import yaml
 
-def loadConfig(conffile = "/etc/vzsandbox-api.yaml"):
+def loadConfig(conffile = "/etc/vzsandbox.yaml"):
     try:
         with open(conffile, "r") as fd:
             config = yaml.load(fd.read())
