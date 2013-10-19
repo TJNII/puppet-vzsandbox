@@ -72,7 +72,7 @@ class Vzsandbox(object):
             #userProcess = subprocess.Popen(("vzctl exec %d users" % ctid), stdout=subprocess.PIPE, shell=True)
 
             # As all logins will be over ssh, utilize grep on the mount point to find any active ssh processes
-            userProcess = subprocess.Popen(("grep ssh %s/%d/proc/*/cmdline -a | wc -l" % (self.config["vz-dirs"]["root"], ctid)),
+            userProcess = subprocess.Popen(("grep ssh %s/%d/proc/*/cmdline -a 2>/dev/null | wc -l" % (self.config["vz-dirs"]["root"], ctid)),
                                            stdout=subprocess.PIPE, shell=True)
             assert(userProcess.wait() == 0)
             if int(userProcess.stdout.read().strip()) > 1:
@@ -230,7 +230,23 @@ class Vzsandbox(object):
         starttime = time.time()
         process = subprocess.Popen(("vzctl %s %d" % (command, ctid)), stdout=subprocess.PIPE, shell=True)
         assert(process.wait() == 0)
-        return (time.time() - starttime)
+
+        if command != "start":
+            return (time.time() - starttime)
+        # Ensure sshd is up
+        for x in range(10):
+            process = subprocess.Popen(("grep sshd %s/%d/proc/*/cmdline -a 2>/dev/null | wc -l" % (self.config["vz-dirs"]["root"], ctid)),
+                                       stdout=subprocess.PIPE, shell=True)
+            assert(process.wait() == 0)
+            if int(process.stdout.read().strip()) > 0:
+                # Ensure it is fully started
+                # TODO: Yet another race.... Check if it is listening, perhaps?
+                time.sleep(0.5)
+                return (time.time() - starttime)
+            
+            time.sleep(0.5)
+
+        return False
 
     def set_ct_power(self, ctid):
         if self.arguments is None:
@@ -247,8 +263,12 @@ class Vzsandbox(object):
                 print "ERROR: ct is already on"
                 return False
 
+            retVal = self.poweraction("start", ctid)
+            if retVal is False:
+                return False
+
             return {"status": True,
-                    "runtime": self.poweraction("start", ctid)}
+                    "runtime": retVal}
 
         if state == "off":
             status = self.get_status(ctid)

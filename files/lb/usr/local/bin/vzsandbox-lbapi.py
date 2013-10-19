@@ -8,7 +8,6 @@ import json
 import yaml
 
 Config = {}
-LastNodeID = 0
 
 def loadConfig(conffile = "/etc/vzsandbox-lb.yaml"):
     try:
@@ -59,8 +58,6 @@ class RestBase(object):
 
 class Builder(restful.Resource):
     def get(self):
-        global LastNodeID
-
         if Config['server'].has_key("debug"):
             debug = Config['server']['debug']
         else:
@@ -68,7 +65,8 @@ class Builder(restful.Resource):
 
         rest = RestBase(debug)
 
-        nodeID = (LastNodeID + 1)
+        lastNodeID = rrfile_get_next(Config)
+        nodeID = (lastNodeID + 1)
         while True:
             if nodeID >= len(Config["hypervisors"]):
                 nodeID = 0
@@ -78,24 +76,45 @@ class Builder(restful.Resource):
 
             retVal = rest.get("http://%s:5000/providect" % Config["hypervisors"][nodeID])
             if retVal != False:
-                LastNodeID = nodeID
                 retVal["host"] = Config["hypervisors"][nodeID]
                 return retVal
 
             print "WARNING: Error on node %s" % Config["hypervisors"][nodeID]
 
-            if nodeID == LastNodeID:
+            if nodeID == lastNodeID:
                 abort(502)
             nodeID += 1
             
 
         abort(503)
 
+def init_rrfile(config):
+    with open(config['server']['rrfile'], "w") as fd:
+        fd.write("0")
+
+def rrfile_get_next(config):
+    # There's a huge race condition here, hopefully it will be
+    # maneagable until we figure out something better
+    maxNodeID = len(Config["hypervisors"])
+    with open(config['server']['rrfile'], "r") as fd:
+        nodeID = int(fd.read())
+    
+    wNodeID = nodeID + 1
+    if wNodeID >= maxNodeID:
+        wNodeID = 0
+    
+    with open(config['server']['rrfile'], "w") as fd:
+        fd.write("%s" % wNodeID)
+
+    return nodeID
+
 def main():
     global Config
     Config = loadConfig()
     if Config == False:
         return 1
+
+    init_rrfile(Config)
 
     app = Flask(__name__)
     api = restful.Api(app)
@@ -105,7 +124,7 @@ def main():
     if Config['server'].has_key("debug"):
         app.run(debug=True)
     else:
-        app.run(host=Config['server']['bind-address'])
+        app.run(host=Config['server']['bind-address'], threaded=True)
     
     return 0
 

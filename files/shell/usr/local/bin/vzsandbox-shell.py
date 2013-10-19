@@ -6,6 +6,7 @@ import pexpect
 import yaml
 import urllib2
 import json
+import time
 
 def loadConfig(conffile = "/etc/vzsandbox-shell.yaml"):
     try:
@@ -106,6 +107,8 @@ class RestBase(object):
     return self.request(url, data = data)
 
 def main():
+    startTime = time.time()
+
     config = loadConfig()
     if config == False:
         return 1
@@ -127,7 +130,7 @@ def main():
 
     if debug:
         print container
-    print "INITIALIZATION: Container acquired in %s seconds" % container["runtime"]
+    print "INITIALIZATION: Container built in %s seconds" % container["runtime"]
     print "INITIALIZATION: Your server will be %s, container %d on hypervisor %s" % (
          container["ip"],
          container["ct"],
@@ -141,6 +144,7 @@ def main():
         print "Key file: %s" % keyfile
 
     print "INITIALIZATION COMPLETE: TRANSFERRING LOGON"
+    print "Total initialization time: %s seconds" % (time.time() - startTime)
     print ""
     interact(container["ip"], keyfile, config)
 
