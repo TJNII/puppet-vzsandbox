@@ -68,12 +68,17 @@ class Vzsandbox(object):
             retVal["running"] = True
 
             # VM is running, get user status
-            userProcess = subprocess.Popen(("vzctl exec %d users" % ctid), stdout=subprocess.PIPE, shell=True)
+            # You can't rely on any in-container utils in case some smart-alec does a rm -rf /
+            #userProcess = subprocess.Popen(("vzctl exec %d users" % ctid), stdout=subprocess.PIPE, shell=True)
+
+            # As all logins will be over ssh, utilize grep on the mount point to find any active ssh processes
+            userProcess = subprocess.Popen(("grep ssh %s/%d/proc/*/cmdline -a | wc -l" % (self.config["vz-dirs"]["root"], ctid)),
+                                           stdout=subprocess.PIPE, shell=True)
             assert(userProcess.wait() == 0)
-            if userProcess.stdout.read().strip() == "":
-                retVal["userActive"] = False
-            else:
+            if int(userProcess.stdout.read().strip()) > 1:
                 retVal["userActive"] = True
+            else:
+                retVal["userActive"] = False
 
         else:
             retVal["userActive"] = False
@@ -122,6 +127,9 @@ class Vzsandbox(object):
                    "expiredContainers": []
                    }
 
+        dirtyContainers = []
+        cleanContainers = []
+
         for ctid in cts:
             status = self.get_status(ctid)
             
@@ -132,9 +140,12 @@ class Vzsandbox(object):
                 retVal["inUseContainers"].append(ctid)
             elif status["running"] == True:
                 retVal["expiredContainers"].append(ctid)
+            elif status["clean"] == True:
+                cleanContainers.append(ctid)
             else:
-                retVal["idleContainers"].append(ctid)
-
+                dirtyContainers.append(ctid)
+            
+        retVal["idleContainers"] = cleanContainers + dirtyContainers
         return retVal
 
 
