@@ -108,13 +108,15 @@ class Vzsandbox(object):
         if self.config['build'].has_key("max-count"):
             if self.config['build']['max-count'] < ctmax:
                 ctmax = self.config['build']['max-count']
+
+        ctCurMax = max(cts)
+        if (ctCurMax + 1) <= ctmax:
+            return (ctCurMax + 1)
+
+        # Can't increment, look for holes...
         for x in xrange(self.ctid_limit["min"], (ctmax + 1), 1):
-            if x >= len(cts):
-                if not self.check_rebuilding_flag(x):
-                    return (x + 1)
-            else:
-                if x < cts[(x - 1)] and not self.check_rebuilding_flag(x):
-                    return x
+            if not x in cts:
+                return x
 
         return None
 
