@@ -5,6 +5,7 @@ class vzsandbox::hypervisor (
   # TODO: Combine in openvz class and calculate from subnet
   $subnet_prefix,
   $max_containers,
+  $vmaccess_interface = $interfaces_internal,
   ) {
 
     class { "vzsandbox::hypervisor::common":
@@ -28,4 +29,16 @@ class vzsandbox::hypervisor (
       owner  => root,
       group  => root,
     }
+
+
+    if $manage_firewall == true {
+      firewall { "10 Allow openvz icmp traffic":
+        chain    => 'FORWARD',
+        action   => accept,
+        iniface  => "$vmaccess_interface",
+        outiface => "venet0",
+      }
+      
+    }
+
 }
