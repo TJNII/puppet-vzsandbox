@@ -36,9 +36,26 @@ class vzsandbox::hypervisor (
 
 
     if $manage_firewall == true {
-      firewall { "10 Allow openvz icmp traffic":
+      firewall { "010 Reject control iface inbound forward":
+        chain    => 'FORWARD',
+        action   => reject,
+        proto    => 'all',
+        reject   => 'icmp-host-prohibited',
+        iniface  => "$control_interface",
+      }
+      firewall { "011 Reject control iface outbound forward":
+        chain    => 'FORWARD',
+        action   => reject,
+        proto    => 'all',
+        reject   => 'icmp-host-prohibited',
+        outiface => "$control_interface",
+      }
+      
+      
+      firewall { "020 Allow openvz inbound traffic":
         chain    => 'FORWARD',
         action   => accept,
+        proto    => 'all',
         iniface  => "$vmaccess_interface",
         outiface => "venet0",
       }
