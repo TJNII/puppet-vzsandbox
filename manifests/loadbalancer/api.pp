@@ -5,7 +5,6 @@ class vzsandbox::loadbalancer::api (
   $lb_hypervisors,
   ) {
   # the API requires flask-restful which is installed by pip which is provided by epel
-  include "repoconfig::epel"
   include "vzsandbox::common::api"
 
   file { "/etc/vzsandbox-lb.yaml":

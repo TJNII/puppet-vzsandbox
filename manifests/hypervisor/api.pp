@@ -5,7 +5,6 @@ class vzsandbox::hypervisor::api (
   $control_server  = undef,
   ) {
   # the API requires flask-restful which is installed by pip which is provided by epel
-  include "repoconfig::epel"
   include "vzsandbox::hypervisor::common"
   include "vzsandbox::common::api"
 
