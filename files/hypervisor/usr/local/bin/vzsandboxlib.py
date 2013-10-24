@@ -104,6 +104,9 @@ class Vzsandbox(object):
     def get_unused_ct(self):
         cts = self.get_all_cts()
 
+        if len(cts) == 0:
+            return self.ctid_limit["min"]
+
         ctmax = self.ctid_limit["max"]
         if self.config['build'].has_key("max-count"):
             if self.config['build']['max-count'] < ctmax:
