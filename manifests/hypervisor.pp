@@ -4,19 +4,23 @@ class vzsandbox::hypervisor (
   $control_server  = undef,
   # TODO: Combine in openvz class and calculate from subnet
   $subnet_prefix,
+  $min_containers,
   $max_containers,
   $vmaccess_interface = $interfaces_internal,
+  $control_interface = $interfaces_internal,
   ) {
 
     class { "vzsandbox::hypervisor::common":
       manage_firewall => $manage_firewall,
       subnet_prefix   => $subnet_prefix,
+      min_containers  => $min_containers,
       max_containers  => $max_containers,
     }
 
     class { "vzsandbox::hypervisor::api":
-      manage_firewall => $manage_firewall,
-      control_server  => $control_server,
+      manage_firewall   => $manage_firewall,
+      control_server    => $control_server,
+      control_interface => $control_interface,
     }
 
     class { "vzsandbox::hypervisor::clean":

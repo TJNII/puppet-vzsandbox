@@ -7,9 +7,9 @@ build:
   templates:       /vzTemplates
   source:          cpMinimal
   hostname-prefix: sandbox
-  hostname-suffix: .sandboxes.rshscp.us
+  hostname-suffix: .<%= sandbox_domain %>
   ipaddr-prefix:   <%= subnet_prefix %>
-  standby-count:   25
+  standby-count:   <%= min_containers %>
   max-count:       <%= max_containers %>
 
 server:

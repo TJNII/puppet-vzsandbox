@@ -3,7 +3,9 @@
 class vzsandbox::hypervisor::common (
   $manage_firewall = true,
   $subnet_prefix,
+  $min_containers = 25,
   $max_containers = 253,
+  $sandbox_domain = $domain,
   ) {
   file { "/usr/local/bin/vzsandboxlib.py":
     ensure  => file,

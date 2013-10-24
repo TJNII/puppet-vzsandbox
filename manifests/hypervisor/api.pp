@@ -2,7 +2,8 @@
 # API files
 class vzsandbox::hypervisor::api (
   $manage_firewall = true,
-  $control_server  = undef,
+  $control_server,
+  $control_interface,
   ) {
   # the API requires flask-restful which is installed by pip which is provided by epel
   include "vzsandbox::hypervisor::common"
@@ -58,12 +59,12 @@ class vzsandbox::hypervisor::api (
     include firewall-config::base
     
     firewall { '99 allow 5000/TCP for vzsandboxapi from control server':
-      state => ['NEW'],
-      dport => '5000',
-      proto => 'tcp',
-      source => "$control_server",
-      iniface => "$interfaces_internal",
-      action => accept,
+      state   => ['NEW'],
+      dport   => '5000',
+      proto   => 'tcp',
+      source  => "$control_server",
+      iniface => "$control_interface",
+      action  => accept,
     }
   }
 }
