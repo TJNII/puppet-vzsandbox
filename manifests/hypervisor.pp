@@ -8,6 +8,7 @@ class vzsandbox::hypervisor (
   $max_containers,
   $vmaccess_interface = $interfaces_internal,
   $control_interface = $interfaces_internal,
+  $target_template,
   ) {
 
     class { "vzsandbox::hypervisor::common":
@@ -15,6 +16,7 @@ class vzsandbox::hypervisor (
       subnet_prefix   => $subnet_prefix,
       min_containers  => $min_containers,
       max_containers  => $max_containers,
+      target_template => $target_template,
     }
 
     class { "vzsandbox::hypervisor::api":

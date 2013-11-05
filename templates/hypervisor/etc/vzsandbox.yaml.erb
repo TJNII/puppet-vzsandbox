@@ -5,7 +5,7 @@ vz-dirs:
 
 build:
   templates:       /vzTemplates
-  source:          cpMinimal
+  source:          <%= target_template %>
   hostname-prefix: sandbox
   hostname-suffix: .<%= sandbox_domain %>
   ipaddr-prefix:   <%= subnet_prefix %>

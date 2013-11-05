@@ -5,7 +5,8 @@ class vzsandbox::hypervisor::common (
   $subnet_prefix,
   $min_containers = 25,
   $max_containers = 253,
-  $sandbox_domain = $domain,
+  $sandbox_domain = $fqdn,
+  $target_template,
   ) {
   file { "/usr/local/bin/vzsandboxlib.py":
     ensure  => file,
