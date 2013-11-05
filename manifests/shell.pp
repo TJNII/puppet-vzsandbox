@@ -3,10 +3,8 @@ class vzsandbox::shell (
   $loadbalancer_host = "127.0.0.1",
   )
 {
-  # TODO: Fix PyYAML collission
-  package { 'pexpect':
-    ensure   => installed,
-  }
+  include commonpackages::python::yaml
+  include commonpackages::python::pexpect
   
   file { "/usr/local/bin/vzsandbox-shell.py":
     ensure  => file,
@@ -14,7 +12,9 @@ class vzsandbox::shell (
     group   => root,
     mode    => 755,
     source  => "puppet:///modules/vzsandbox/shell/usr/local/bin/vzsandbox-shell.py",
-    require => Package["PyYAML"],
+    require => [ Class['commonpackages::python::yaml'],
+                 Class['commonpackages::python::pexpect'],
+                 ],
   }
   
   file { "/etc/vzsandbox-shell.yaml":
