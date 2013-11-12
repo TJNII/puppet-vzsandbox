@@ -1,5 +1,5 @@
 #!/bin/false
-# Include library for use by the API and times jobs
+# Include library for use by the API and timed jobs
 
 import re
 import time
