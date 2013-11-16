@@ -21,7 +21,7 @@ The current use is as follows:
 * The vzsandbox-shell script makes a request to the load balancer for a container
 * The load balancer requests a container from one of the hypervisors
 * The hypervisor powers on and returns details of the container to use
-* The shell uses expect to SSH into the container
+* vzsandbox-shell uses expect to SSH into the container using a SSH key
 * The user interacts with the container as if they logged in directly
 
 As speed is a key need here, the hypervisors will keep a cache of "clean" containers on hand.
