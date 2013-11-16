@@ -4,7 +4,12 @@ VZSandbox
 This module configures a sandbox environment of disposable Linux machines in OpenVZ.
 It is intended for classroom use, where you need to provide a large number of Linux machines
 to students quickly, where they have root access to practice administration but are jailed
-so they cannot interfere with each other.  This module is intended to configure multiple servers:
+so they cannot interfere with each other.  
+This module is also built with speed in mind.
+It is intended for lectures where only a limited amount of time is available for instruction, so
+all the students need to be able to log into their sandboxes in only a few minutes.
+
+This module is intended to configure multiple servers:
 
 * Multiple OpenVZ hypervisors.  This solution is designed to scale horosontially, not vertically, for speed.  Multiple small - medium sized hyps will offer superior performance to one big one.
 * A load balancer for distributing VM requests to the hypervisors
