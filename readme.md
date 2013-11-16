@@ -32,3 +32,10 @@ Each hyp has a defined maximum of containers to avoid issues with resource deple
 APIs are currently implemented via flask-resful in Python.
 There is no API security at this time.
 The APIs currently need to be run on trusted networks, a dedicated VLAN with proper hyp firewall rules is recommended.
+
+This module does not contain any templates.
+
+Example Install
+---------------
+
+[ To Be Added ]
