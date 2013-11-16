@@ -35,6 +35,8 @@ The APIs currently need to be run on trusted networks, a dedicated VLAN with pro
 
 This module does not contain any templates.
 
+Please take a look at the issues before installing; this module is still alpha and has some sharp edges.
+
 Example Install
 ---------------
 
