@@ -41,7 +41,7 @@ def clean(vzlib, debug):
     # Get container status
     cts = vzlib.get_all_status()
     initial_targets  = cts["expiredContainers"] + cts["idleContainers"]
-    if len(i) == 0:
+    if len(initial_targets) == 0:
         return
 
     # Delay and recheck to avoid potential race conditions with login script
