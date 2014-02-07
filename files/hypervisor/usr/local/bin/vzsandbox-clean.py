@@ -22,6 +22,7 @@
 import sys
 import vzsandboxlib
 import syslog
+import time
 
 def clean_ct(vzlib, ctid):
     # Get status again in case a VM was while we were busy
@@ -36,19 +37,25 @@ def clean_ct(vzlib, ctid):
     vzlib.reset_ctfs(ctid)
     return True
 
-def clean_cts(vzlib, cts, debug):
-    for ctid in cts:
-        if debug:
-            syslog.syslog("%s: INFO: Cleaning ctid %s" % (sys.argv[0], ctid))
-        clean_ct(vzlib, ctid)
-
 def clean(vzlib, debug):
     # Get container status
     cts = vzlib.get_all_status()
+    initial_targets  = cts["expiredContainers"] + cts["idleContainers"]
+    if len(i) == 0:
+        return
 
+    # Delay and recheck to avoid potential race conditions with login script
+    time.sleep(30)
+    
+    cts = vzlib.get_all_status()
+    final_targets  = cts["expiredContainers"] + cts["idleContainers"]
+    
     # Iterate over idle containers and reset them
-    clean_cts(vzlib, cts["expiredContainers"], debug)
-    clean_cts(vzlib, cts["idleContainers"], debug)
+    for ctid in initial_targets:
+        if ctid in final_targets:
+            if debug:
+                syslog.syslog("%s: INFO: Cleaning ctid %s" % (sys.argv[0], ctid))
+            clean_ct(vzlib, ctid)
 
 def build_spares(vzlib, debug, standby_count):
     # Get container status
