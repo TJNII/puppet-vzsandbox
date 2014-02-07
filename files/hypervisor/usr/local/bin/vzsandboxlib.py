@@ -143,11 +143,11 @@ class Vzsandbox(object):
                    "idleContainers": [],
                    "inUseContainers": [],
                    "busyContainers": [],
-                   "expiredContainers": []
+                   "expiredContainers": [],
+                   "dirtyContainers": [],
+                   "cleanContainers": []
                    }
 
-        dirtyContainers = []
-        cleanContainers = []
 
         for ctid in cts:
             status = self.get_status(ctid)
@@ -160,11 +160,11 @@ class Vzsandbox(object):
             elif status["running"] == True:
                 retVal["expiredContainers"].append(ctid)
             elif status["clean"] == True:
-                cleanContainers.append(ctid)
+                retVal["cleanContainers"].append(ctid)
             else:
-                dirtyContainers.append(ctid)
+                retVal["dirtyContainers"].append(ctid)
             
-        retVal["idleContainers"] = cleanContainers + dirtyContainers
+        retVal["idleContainers"] = retVal["cleanContainers"] + retVal["dirtyContainers"]
         return retVal
 
 
