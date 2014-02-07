@@ -59,13 +59,17 @@ def build_spares(vzlib, debug, standby_count):
         syslog.syslog("%s: INFO: Idle containers: %d" % (sys.argv[0], idle_cts))
     needed_cts = standby_count - idle_cts
     if needed_cts <= 0:
-        return True
+        return
     
     if debug:
         syslog.syslog("%s: INFO: Needed containers: %d" % (sys.argv[0], needed_cts))
 
     for x in xrange(0, needed_cts, 1):
         ctid = vzlib.get_unused_ct()
+        if ctid is None:
+            syslog.syslog("%s: WARNING: No free containers, unable to maintain spare buffer (Failure at %d of %d)" % (sys.argv[0], x, needed_cts))
+            return
+
         if debug:
             syslog.syslog("%s: INFO: Building container %d" % (sys.argv[0], ctid))
         vzlib.create_ct(ctid)
