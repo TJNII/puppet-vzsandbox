@@ -93,10 +93,17 @@ class Delay(restful.Resource):
 class Status(restful.Resource):
     def get(self, location):
         retVal = None
+        vzlib = vzsandboxlib.Vzsandbox(Config, arguments = request.json)
 
         if location == "containers":
-            vzlib = vzsandboxlib.Vzsandbox(Config, arguments = request.json)
             retVal = vzlib.get_all_status()
+
+        if location == "healthcheck":
+            # This is a very rudimentary health check for use by the load balancers
+            if len(vzlib.get_all_status()["idleContainers"]) < 1:
+                retVal = { "Status": "Full" }
+            else:
+                retVal = { "Status": "OK" }
 
         if retVal == None:
             abort(404)
