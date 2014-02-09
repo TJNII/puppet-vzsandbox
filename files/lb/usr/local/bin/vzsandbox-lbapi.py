@@ -91,7 +91,6 @@ class Builder(restful.Resource):
 
             retVal = rest.get("http://%s:5000/providect" % Config["hypervisors"][nodeID])
             if retVal != False:
-                retVal["host"] = Config["hypervisors"][nodeID]
                 return retVal
 
             print "WARNING: Error on node %s" % Config["hypervisors"][nodeID]

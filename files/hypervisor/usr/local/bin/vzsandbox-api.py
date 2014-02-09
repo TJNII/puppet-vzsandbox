@@ -22,6 +22,7 @@ from flask.ext import restful
 import time
 import sys
 import vzsandboxlib
+import socket
 
 class VZCTAPI(restful.Resource):
     def get(self, ctid, action):
@@ -131,7 +132,9 @@ class Builder(restful.Resource):
 
             return { "ct": ctid,
                      "ip": ("%s%s" % (Config["build"]["ipaddr-prefix"], ctid)),
-                     "runtime": (time.time() - starttime)}
+                     "host": Config["server"]["hostname"],
+                     "runtime": (time.time() - starttime)
+                     }
 
         # Failed to use existing cts, build a new one
         while True:
@@ -158,7 +161,9 @@ def main():
     Config = vzsandboxlib.loadConfig()
     if Config == False:
         return 1
-
+    if not Config["server"].has_key("hostname"):
+        Config["server"]["hostname"] = socket.gethostname()
+    
     app = Flask(__name__)
     api = restful.Api(app)
     
