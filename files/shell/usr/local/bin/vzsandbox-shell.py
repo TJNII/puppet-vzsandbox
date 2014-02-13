@@ -164,6 +164,9 @@ def main():
     if debug:
         print "Key file: %s" % keyfile
 
+    # Hack for https://github.com/TJNII/puppet-vzsandbox/issues/17
+    time.sleep(3)
+
     print "INITIALIZATION COMPLETE: TRANSFERRING LOGON"
     print "Total initialization time: %s seconds" % (time.time() - startTime)
     print ""
