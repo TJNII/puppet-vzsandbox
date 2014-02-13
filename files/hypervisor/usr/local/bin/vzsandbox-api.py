@@ -161,7 +161,9 @@ class Builder(restful.Resource):
             
             return { "ct": ctid,
                      "ip": ("%s%s" % (Config["build"]["ipaddr-prefix"], ctid)),
-                     "runtime": (time.time() - starttime) }
+                     "host": Config["server"]["hostname"],
+                     "runtime": (time.time() - starttime)
+                     }
         
 def main():
     global Config
