@@ -28,7 +28,8 @@ import yaml
 import urllib2
 import json
 import time
-import socket;
+import socket
+import syslog
 
 def loadConfig(conffile = "/etc/vzsandbox-shell.yaml"):
     try:
@@ -183,6 +184,15 @@ def main():
     print "INITIALIZATION COMPLETE: TRANSFERRING LOGON"
     print "Total initialization time: %s seconds" % (time.time() - startTime)
     print ""
+
+    syslog.syslog("%s: Providing container %d on hypervisor %s (Container IP: %s) to user with uid %s.  SSH_CLIENT env var: \"%s\"" %
+                  (sys.argv[0],
+                   container["ct"],
+                   container["host"],
+                   container["ip"],
+                   os.getuid(),
+                   os.environ.get('SSH_CLIENT')))
+    
     interact(container["ip"], keyfile, config)
 
     print
@@ -193,6 +203,14 @@ def main():
         print "WARNING: POWEROFF FAILED"
 
     print "Complete."
+    syslog.syslog("%s: Graceful logout of container %d on hypervisor %s (Container IP: %s) by user with uid %s.  SSH_CLIENT env var: \"%s\"" %
+                  (sys.argv[0],
+                   container["ct"],
+                   container["host"],
+                   container["ip"],
+                   os.getuid(),
+                   os.environ.get('SSH_CLIENT')))
+
     return 0
 
 if __name__ == '__main__':
