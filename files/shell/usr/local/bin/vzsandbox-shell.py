@@ -23,11 +23,12 @@
 
 import sys
 import os
-import pexpect
+import subprocess
 import yaml
 import urllib2
 import json
 import time
+import socket;
 
 def loadConfig(conffile = "/etc/vzsandbox-shell.yaml"):
     try:
@@ -64,15 +65,22 @@ def mkKeyFile(sourcefile, tmpdir, fileid):
     assert(os.stat(outfile).st_mode == 0100400)
     return outfile
 
+def checkSocket(server, port, config):
+    for x in range(0, config["ssh"]["timeout"], 1):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = sock.connect_ex((server, port))
+        if result == 0:
+            return True
+
+        time.sleep(1)
+
+    return False
+
 def interact(server, keyfile, config):
-    child = pexpect.spawn("ssh %s@%s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i %s" % 
-                          (config["hypervisor"]["user"], server, keyfile))
-    try:
-        child.interact()
-    except OSError:
-        # interact() throws an exception when the shell exits
-        # TODO: Determine more graceful method
-        pass
+    p = subprocess.Popen("ssh %s@%s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i %s" % 
+                         (config["hypervisor"]["user"], server, keyfile),
+                         shell=True, stdin=sys.stdin, stdout=sys.stdout)
+    p.wait()
 
 class Vzlbapi(object):
     def __init__(self, config, debug = False):
@@ -140,7 +148,8 @@ def main():
         debug = False
    
     if not os.path.isdir(config["general"]["tmpdir"]):
-        print "ERROR: Temporary directory does not exist"    
+        print "ERROR: Temporary directory does not exist"
+        return 1
 
     print "INITIALIZATION: Acquiring Container"
     api = Vzlbapi(config, debug)
@@ -157,15 +166,19 @@ def main():
          container["ct"],
          container["host"] )
 
-    keyfile = mkKeyFile(config["general"]["keyfile"],
+    keyfile = mkKeyFile(config["ssh"]["keyfile"],
                         config["general"]["tmpdir"],
                         container["ip"])
 
     if debug:
         print "Key file: %s" % keyfile
 
-    # Hack for https://github.com/TJNII/puppet-vzsandbox/issues/17
-    time.sleep(3)
+    # Ensure port is open
+    # https://github.com/TJNII/puppet-vzsandbox/issues/17
+    if checkSocket(container["ip"], 22, config) is False:
+        print "ERROR: SSH port not open after %d seconds" % config["ssh"]["timeout"]
+        return 1
+    time.sleep(config["ssh"]["delay"])
 
     print "INITIALIZATION COMPLETE: TRANSFERRING LOGON"
     print "Total initialization time: %s seconds" % (time.time() - startTime)
